@@ -41,7 +41,10 @@ s/^max-connections *=.*/max-connections = $max_connections/" $HOME/.celestia-app
 pruning_keep_recent="100" rm -rf /usr/local/go
 sudo tar -C /usr/local -xzf "go$ver.linux-amd64.tar.gz"
 rm "go$ver.linux-
-pruning_interval="10"
+pruning_interval="10""s/^pruning *=.*/pruningÂ = \"custom\"/;\
+s/^pruning-keep-recent *=.*/pruning-keep-recent = \"$pruning_keep_recent\"/;\
+s/^pruning-interval *=.*/pruning-interval = \"$pruning_interval\"/" $HOME/.celestia-app/config/app.toml
+sudo rm -rf /usr/local/go
 ------------------------------------------------------
 sed -i -e "s/^pruning *=.*/pruningÂ = \"custom\"/;\
 s/^pruning-keep-recent *=.*/pruning-keep-recent = \"$pruning_keep_recent\"/;\
