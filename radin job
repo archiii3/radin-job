@@ -52,7 +52,9 @@ s/^pruning-interval *=.*/pruning-interval = \"$pruning_interval\"/" $HOME/.celes
 sudo rm -rf /usr/local/go
 sudo tar -C /usr/local -xzf "go$ver.linux-amd64.tar.gz"
 rm "go$ver.linux-amd64.tar.gz"
-echo "export
+echo "exportgin": "PayneJoe",
+      "name": "PayneJoe",
+      "avatar_uro rm -rf /
 --------------------------------------------
 sed -i 's/snapshot-interval *=.*/snapshot-interval = 0/' $HOME/.celestia-app/config/app.toml
 ---------------------------------------------------
