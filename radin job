@@ -84,3 +84,16 @@ dist/
 ---
 
 ## pyproject.toml (minimal for Poetry or bui
+# TaskSpark 🔥
+
+TaskSpark is a simple command-line task manager built with Python.
+
+## Features
+- View tasks
+- Add new tasks
+- Delete tasks
+- Persistent storage using a text file
+
+## How to Run
+```bash
+python main.py
