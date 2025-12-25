@@ -1,0 +1,82 @@
+# SmartTaskCLI
+
+SmartTaskCLI is a simple command-line application written in Python that helps you manage your daily tasks.
+
+## Features
+- Add new tasks
+- View all tasks
+- Mark tasks as completed
+- Save tasks locally
+
+## Requirements
+- Python 3.8+
+
+## How to Run
+```bash
+python main.py
+
+---
+
+## 🧠 main.py
+```python
+import json
+import os
+
+TASKS_FILE = "tasks.json"
+
+def load_tasks():
+    if not os.path.exists(TASKS_FILE):
+        return []
+    with open(TASKS_FILE, "r") as file:
+        return json.load(file)
+
+def save_tasks(tasks):
+    with open(TASKS_FILE, "w") as file:
+        json.dump(tasks, file, indent=2)
+
+def add_task(title):
+    tasks = load_tasks()
+    tasks.append({"title": title, "completed": False})
+    save_tasks(tasks)
+    print("Task added successfully.")
+
+def list_tasks():
+    tasks = load_tasks()
+    if not tasks:
+        print("No tasks found.")
+        return
+
+    for i, task in enumerate(tasks, start=1):
+        status = "✔" if task["completed"] else "✘"
+        print(f"{i}. [{status}] {task['title']}")
+
+def complete_task(index):
+    tasks = load_tasks()
+    if 0 <= index < len(tasks):
+        tasks[index]["completed"] = True
+        save_tasks(tasks)
+        print("Task marked as completed.")
+    else:
+        print("Invalid task number.")
+
+def main():
+    while True:
+        print("\n1. Add Task\n2. List Tasks\n3. Complete Task\n4. Exit")
+        choice = input("Choose an option: ")
+
+        if choice == "1":
+            title = input("Task title: ")
+            add_task(title)
+        elif choice == "2":
+            list_tasks()
+        elif choice == "3":
+            list_tasks()
+            index = int(input("Task number: ")) - 1
+            complete_task(index)
+        elif choice == "4":
+            break
+        else:
+            print("Invalid choice.")
+
+if __name__ == "__main__":
+    main()
