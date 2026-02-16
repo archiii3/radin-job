@@ -27,6 +27,13 @@ import os
 
 TASKS_FILE = "tasks.json"
 
+## Requirements
+- Python 3.8+
+- Add new tasks
+- View all tasks
+- Mark tasks as completed
+- Save tasks locally
+## How to Run
 def load_tasks():
     if not os.path.exists(TASKS_FILE):
         return []
