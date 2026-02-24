@@ -18,6 +18,12 @@ SmartTaskCLI is a simple command-line application written in Python that helps y
 ```bash
 python main.py
 
+## Features
+- Add new tasks
+- View all tasks
+- Mark tasks as completed
+- Save tasks locally
+
 ---
 
 ## 🧠 main.py
