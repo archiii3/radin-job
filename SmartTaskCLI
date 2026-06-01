@@ -74,7 +74,10 @@ def complete_task(index):
         print("Task marked as completed.")
     else:
         print("Invalid task number.")
-
+ Add new tasks
+- View all tasks
+- Mark tasks as completed
+- Save tasks locally
 def main():
     while True:
         print("\n1. Add Task\n2. List Tasks\n3. Complete Task\n4. Exit")
