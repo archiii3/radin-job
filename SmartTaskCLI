@@ -8,6 +8,12 @@ SmartTaskCLI is a simple command-line application written in Python that helps y
 - Mark tasks as completed
 - Save tasks locally
 
+## 🧠 main.py
+```python
+import json
+import os
+
+TASKS_FILE = "tasks.json"
 ## Requirements
 - Python 3.8+
 - Add new tasks
@@ -17,14 +23,6 @@ SmartTaskCLI is a simple command-line application written in Python that helps y
 ## How to Run
 ```bash
 python main.py
-
-
-## 🧠 main.py
-```python
-import json
-import os
-
-TASKS_FILE = "tasks.json"
 
 ## Requirements
 - Python 3.8+
