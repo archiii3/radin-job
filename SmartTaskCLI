@@ -1,100 +1,263 @@
-# SmartTaskCLI
+#!/usr/bin/env python3
 
-SmartTaskCLI is a simple command-line application written in Python that helps you manage your daily tasks.
+"""
+RepoPulse
+---------
+A lightweight Git repository health and codebase analyzer.
 
-## Features
-- Add new tasks
-- View all tasks
-- Mark tasks as completed
-- Save tasks locally
+No external dependencies required.
+"""
 
-## 🧠 main.py
-```python
-import json
+from __future__ import annotations
+
+import argparse
 import os
+import subprocess
+from pathlib import Path
+from collections import Counter
 
-TASKS_FILE = "tasks.json"
-## Requirements
-- Python 3.8+
-- Add new tasks
-- View all tasks
-- Mark tasks as completed
-- Save tasks locally
-## How to Run
-```bash
-python main.py
 
-## Requirements
-- Python 3.8+
-- Add new tasks
-- View all tasks
-- Mark tasks as completed
-- Save tasks locally
-## How to Run
-def load_tasks():
-    if not os.path.exists(TASKS_FILE):
-        return []
-    with open(TASKS_FILE, "r") as file:
-        return json.load(file)
+IGNORED_DIRS = {
+    ".git",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "dist",
+    "build",
+    ".idea",
+    ".vscode",
+}
 
-def save_tasks(tasks):
-    with open(TASKS_FILE, "w") as file:
-        json.dump(tasks, file, indent=2)
+CODE_EXTENSIONS = {
+    ".py", ".js", ".ts", ".tsx", ".jsx",
+    ".java", ".c", ".cpp", ".h", ".hpp",
+    ".go", ".rs", ".php", ".rb",
+    ".swift", ".kt", ".kts",
+    ".html", ".css", ".scss",
+    ".sh", ".sql",
+}
 
-def add_task(title):
-    tasks = load_tasks()
-    tasks.append({"title": title, "completed": False})
-    save_tasks(tasks)
-    print("Task added successfully.")
 
-def list_tasks():
-    tasks = load_tasks()
-    if not tasks:
-        print("No tasks found.")
-        return
+def run_git_command(*args: str) -> str:
+    """Run a Git command and return its output."""
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return ""
 
-    for i, task in enumerate(tasks, start=1):
-        status = "✔" if task["completed"] else "✘"
-        print(f"{i}. [{status}] {task['title']}")
 
-def complete_task(index):
-    tasks = load_tasks()
-    if 0 <= index < len(tasks):
-        tasks[index]["completed"] = True
-        save_tasks(tasks)
-        print("Task marked as completed.")
+def is_git_repository() -> bool:
+    """Check whether the current directory is a Git repository."""
+    return bool(run_git_command("rev-parse", "--is-inside-work-tree"))
+
+
+def scan_repository(root: Path):
+    """Scan repository files and collect useful statistics."""
+    files = []
+    extensions = Counter()
+    large_files = []
+    todos = []
+    total_lines = 0
+
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+
+        relative = path.relative_to(root)
+
+        if any(part in IGNORED_DIRS for part in relative.parts):
+            continue
+
+        try:
+            size = path.stat().st_size
+        except OSError:
+            continue
+
+        files.append(path)
+
+        if path.suffix:
+            extensions[path.suffix.lower()] += 1
+
+        if size > 1_000_000:
+            large_files.append((relative, size))
+
+        if path.suffix.lower() in CODE_EXTENSIONS:
+            try:
+                content = path.read_text(
+                    encoding="utf-8",
+                    errors="ignore",
+                )
+            except OSError:
+                continue
+
+            lines = content.splitlines()
+            total_lines += len(lines)
+
+            for number, line in enumerate(lines, start=1):
+                if "TODO" in line or "FIXME" in line:
+                    todos.append(
+                        (relative, number, line.strip())
+                    )
+
+    return files, extensions, large_files, todos, total_lines
+
+
+def get_git_status():
+    """Return Git branch and working tree status."""
+    branch = run_git_command(
+        "branch", "--show-current"
+    ) or "detached HEAD"
+
+    status = run_git_command(
+        "status", "--short"
+    )
+
+    return branch, status
+
+
+def format_size(size: int) -> str:
+    """Convert bytes into a readable size."""
+    units = ["B", "KB", "MB", "GB"]
+
+    value = float(size)
+
+    for unit in units:
+        if value < 1024:
+            return f"{value:.1f} {unit}"
+        value /= 1024
+
+    return f"{value:.1f} TB"
+
+
+def print_report(root: Path):
+    """Generate and print the repository report."""
+
+    files, extensions, large_files, todos, total_lines = (
+        scan_repository(root)
+    )
+
+    branch, status = get_git_status()
+
+    print()
+    print("=" * 60)
+    print("                     REPOPULSE")
+    print("              Repository Health Report")
+    print("=" * 60)
+
+    print(f"\nRepository : {root.resolve()}")
+    print(f"Git branch : {branch}")
+    print(f"Files      : {len(files):,}")
+    print(f"Code lines : {total_lines:,}")
+
+    print("\nTop file types")
+    print("-" * 30)
+
+    for extension, count in extensions.most_common(10):
+        print(f"{extension:<10} {count:>6}")
+
+    print("\nLarge files (> 1 MB)")
+    print("-" * 30)
+
+    if large_files:
+        for path, size in sorted(
+            large_files,
+            key=lambda item: item[1],
+            reverse=True,
+        )[:10]:
+            print(f"{format_size(size):>10}  {path}")
     else:
-        print("Invalid task number.")
- Add new tasks
-- View all tasks
-- Mark tasks as completed
-- Save tasks locally
-def main():
-    while True:
-        print("\n1. Add Task\n2. List Tasks\n3. Complete Task\n4. Exit")
-        choice = input("Choose an option: ")
+        print("No large files found.")
 
-        if choice == "1":
-            title = input("Task title: ")
-            add_task(title)
-        elif choice == "2":
-            list_tasks()
-        elif choice == "3":
-            list_tasks()
-            index = int(input("Task number: ")) - 1
-            complete_task(index)
-        elif choice == "4":
-            break
-        else:
-            print("Invalid choice.")
+    print("\nTODO / FIXME")
+    print("-" * 30)
+
+    if todos:
+        for path, number, line in todos[:15]:
+            print(f"{path}:{number} -> {line[:100]}")
+    else:
+        print("No TODO or FIXME markers found.")
+
+    print("\nGit working tree")
+    print("-" * 30)
+
+    if status:
+        print(status)
+    else:
+        print("Working tree is clean.")
+
+    print("\nHealth summary")
+    print("-" * 30)
+
+    score = 100
+
+    if large_files:
+        score -= min(len(large_files) * 3, 20)
+
+    if len(todos) > 20:
+        score -= 10
+
+    if status:
+        score -= 5
+
+    score = max(score, 0)
+
+    print(f"Repository score: {score}/100")
+
+    if score >= 90:
+        print("Status: Healthy")
+    elif score >= 70:
+        print("Status: Needs attention")
+    else:
+        print("Status: Review recommended")
+
+    print("\n" + "=" * 60)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Analyze a Git repository with RepoPulse."
+    )
+
+    parser.add_argument(
+        "path",
+        nargs="?",
+        default=".",
+        help="Path to the Git repository.",
+    )
+
+    args = parser.parse_args()
+
+    root = Path(args.path).resolve()
+
+    if not root.exists():
+        print(f"Error: path does not exist: {root}")
+        raise SystemExit(1)
+
+    if not is_git_repository():
+        print(
+            "Error: this directory is not a Git repository."
+        )
+        raise SystemExit(1)
+
+    print_report(root)
+
 
 if __name__ == "__main__":
     main()
+git clone https://github.com/yourusername/repopulse.git
+cd repopulse
 
-## Features
-- Add new tasks
-- View all tasks
-- Mark tasks as completed
-- Save tasks locally
-
----
+python repopulse.py
+python repopulse.py /path/to/project
+RepoPulse/
+├── repopulse.py
+├── README.md
+├── LICENSE
+└── .gitignore
